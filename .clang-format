@@ -4,6 +4,9 @@
 BasedOnStyle: Google
 DerivePointerAlignment: false
 
+IndentWidth: 4            # 缩紧为4个空格
+AccessModifierOffset: -4  # public、private等不缩紧
+
 # Public headers are in a different location in the internal Google repository.
 # Order them so that when imported to the authoritative repository they will be
 # in correct alphabetical order.
