@@ -30,9 +30,10 @@ public:
      * TODO: 为什么要排除最高位？
      * Answer: 采用MINSTD参数的Lehmer RNG算法要求
      * 
-     * 避免不合法的种子(必须和M互质):
-     * 1. seed_作为除数不能为0
-     * 2. 同时2147483647将作为模数不能作为种子
+     * 避免不合法的种子: 根据算法要求seed_是[1, M-1]范围内的数, 因此seed_不能为0和M, 需要排除掉
+     * 反证法:
+     * 1. 当seed_为0时, 生成的随机数总是0
+     * 2. 当seed_为M时, X(1) = (A * X(0)) % M = 0 生成的随机数也总是0
      */
     explicit Random(uint32_t s) : seed_(s & 0x7fffffffu) {
         // Avoid bad seeds.
@@ -96,16 +97,24 @@ public:
     // Returns a uniformly distributed value in the range [0..n-1]
     // REQUIRES: n > 0
     /**
-     * 返回[0...n-1]范围内的均匀分布值(即[0...n-1]的值以1/n的概率返回)
+     * 返回[0...n)范围内的均匀分布值(即[0...n)的值以1/n的概率返回)
      * 要求: n > 0 n是int类型, 肯定在M范围内
+     * TODO: 是否应该加个assert, assert(n > 0)
+     *
+     * range为int32_t而非uint32_t类型的原因:
+     * 随机数能生成的最大值为M, int32_t能表示的最大正数为M 刚好range <= M
+     * 如果range为uint32_t类型, 那么range可能大于M, 不能保证[0...range]范围内的数都是均匀的
      */
     uint32_t Uniform(int n) { return Next() % n; }
 
     // Randomly returns true ~"1/n" of the time, and false otherwise.
     // REQUIRES: n > 0
     /**
-     * 1/n的可能返回true, 其余情况返回false
+     * 1/n的概率返回true, 其余情况返回false
      * 要求: n > 0
+     *
+     * range为int32_t而非uint32_t类型的原因同上
+     * TODO: 是否应该加个assert, assert(n > 0)
      */
     bool OneIn(int n) { return (Next() % n) == 0; }
 
@@ -113,10 +122,13 @@ public:
     // return "base" random bits.  The effect is to pick a number in the
     // range [0,2^max_log-1] with exponential bias towards smaller numbers.
     /**
-     * 偏态分布: 从[0, max_log]中随机选择"base" 然后随机返回[0, 2^base-1]内的数值
-     * 效果是随机返回[0, 2^max_log-1]范围里的数值, 概率偏向较小的数字(2^0 => 2^max_log-1生成概率依次降低)
+     * 偏态分布: 从[0, max_log]中随机选择"base" 然后随机返回[0, 2^base)内的数值
+     * 效果是随机返回[0, 2^max_log)范围里的数值, 概率偏向较小的数字(2^0 => 2^max_log-1生成概率依次降低)
      * 举例: max_log为3, 那么随机生成7的概率为1/8 * 1/4 = 1/32
      * 生成0的概率为: 1/4 * (1 + 1/2 + 1/4 + 1/8) = 15/32
+     *
+     * 因为2^max_log值必须在2^31-1范围内, 因此max_log最大取值30
+     * TODO: 是否应该加个assert, assert(max_log < 31)
      */
     uint32_t Skewed(int max_log) { return Uniform(1 << Uniform(max_log + 1)); }
 };
