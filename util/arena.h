@@ -75,7 +75,7 @@ inline char* Arena::Allocate(size_t bytes) {
     // 0-byte allocations, so we disallow them here (we don't need
     // them for our internal use).
     /**
-     * 如果我们允许0字节分配, 返回内容的语义会优点混乱, 所以在这儿我们不允许
+     * 如果我们允许0字节分配, 返回内容的语义会有点混乱, 所以在这儿我们不允许
      * TODO: 如果bytes为0, 直接返回nullptr会有问题吗？
      */
     assert(bytes > 0);
